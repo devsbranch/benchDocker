@@ -14,7 +14,7 @@ ARG pythonVersion=python3
 ARG appBranch=version-15
 ARG frappeBranch=dtl
 ARG erpnextBranch=dtl
-ARG hrmsBranch=dtl
+ARG hrmsBranch=develop
 
 ###############################################
 # ENV 
@@ -35,7 +35,7 @@ ENV \
     benchBranch=v5.x \
     frappeRepo="https://github.com/devsbranch/frappe" \
     erpnextRepo="https://github.com/devsbranch/erpnext" \
-    hrmsRepo="https://github.com/devsbranch/hrms" \
+    hrmsRepo="https://github.com/frappe/hrms" \
     siteName=site1.local
 
 ###############################################
@@ -111,7 +111,7 @@ RUN sudo apt-get update \
     && cd $benchFolderName \
     # install erpnext
     && bench get-app erpnext $erpnextRepo --branch $erpnextBranch \
-    # && bench get-app hrms $hrmsRepo --branch $hrmsBranch \
+    && bench get-app hrms $hrmsRepo --branch $hrmsBranch \
     # delete temp file
     && sudo rm -rf /tmp/* \
     # start new site
