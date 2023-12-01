@@ -69,7 +69,7 @@ RUN sudo apt-get update \
     && echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.kku.ac.th/mariadb/repo/10.11/debian bookworm main" | sudo tee /etc/apt/sources.list.d/mariadb.list \
     && sudo apt-get update \
     && sudo apt-get install -y -q \
-    # mariadb-server \
+    mariadb-server \
     mariadb-client \
     mariadb-common \
     libmariadb3 \
@@ -100,9 +100,10 @@ RUN sudo apt-get update \
     # Init Bench & Setup Site
     ###############################################
     # copy MariaDB Config
-    # && sudo cp /home/$systemUser/mariadb.cnf /etc/mysql/mariadb.cnf \
-    # && sudo service mariadb start \
-    && sudo mariadb --host="${mysqlhost}" --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
+    && sudo cp /home/$systemUser/mariadb.cnf /etc/mysql/mariadb.cnf \
+    && sudo service mariadb start \
+    && sudo mariadb --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
+    # && sudo mariadb --host="${mysqlhost}" --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
     ###############################################
     # Init Bench
     ###############################################
@@ -111,14 +112,14 @@ RUN sudo apt-get update \
     && cd $benchFolderName \
     # install erpnext
     && bench get-app erpnext $erpnextRepo --branch $erpnextBranch \
-    && bench get-app hrms $hrmsRepo --branch $hrmsBranch \
+    # && bench get-app hrms $hrmsRepo --branch $hrmsBranch \
     # delete temp file
     && sudo rm -rf /tmp/* \
     # start new site
     && bench new-site $siteName \
     --mariadb-root-password $mysqlPass  \
     --admin-password $adminPass \
-    --db-host $mysqlhost \
+    # --db-host $mysqlhost \
     && bench --site $siteName install-app erpnext \
     # && bench --site $siteName install-app hrms \
     # use site
@@ -141,4 +142,4 @@ WORKDIR /home/$systemUser/$benchFolderName
 CMD ["/usr/local/bin/entrypoint.sh"]
 
 # expose port
-EXPOSE 8000 9000
+EXPOSE 8000 9000 3306
