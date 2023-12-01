@@ -1,1 +1,1 @@
-docker build -t dtl/erp-debian:version-15-latest . && docker-compose up -d && docker-compose logs --follow
+docker build -t alisonmukoma/gna-erpnext:15 . && docker-compose up -d && docker-compose logs --follow

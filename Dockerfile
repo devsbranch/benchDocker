@@ -6,15 +6,11 @@ FROM frappe/bench:v5.19.0
 ###############################################
 # ARG
 ###############################################
-ARG adminPass=admin
-ARG mysqlPass=admin
-ARG mysqlhost=172.17.0.1
-ARG mysqldbname=gna 
+ARG adminPass=12345
+ARG mysqlPass=12345
 ARG pythonVersion=python3
-ARG appBranch=version-15
-ARG frappeBranch=dtl
-ARG erpnextBranch=dtl
-ARG hrmsBranch=develop
+# ARG appBranch=version-15
+ARG appBranch=dtl
 
 ###############################################
 # ENV 
@@ -25,7 +21,7 @@ ENV \
     # Dependencies version
     # [Note] Frappe only support up to mariadb 10.8 (as of 2023-Nov)
     # but 10.8 isn't lts version so I use 10.6 instead
-    # mariadbVersion=10.6 \
+    mariadbVersion=10.6 \
     # Frappe Related
     benchPath=bench-repo \
     benchFolderName=bench \
@@ -35,7 +31,6 @@ ENV \
     benchBranch=v5.x \
     frappeRepo="https://github.com/devsbranch/frappe" \
     erpnextRepo="https://github.com/devsbranch/erpnext" \
-    hrmsRepo="https://github.com/frappe/hrms" \
     siteName=site1.local
 
 ###############################################
@@ -74,8 +69,6 @@ RUN sudo apt-get update \
     mariadb-common \
     libmariadb3 \
     python3-mysqldb \
-    # For backups
-    restic \
     ###############################################
     # Install dependencies: Redis
     ###############################################
@@ -103,25 +96,21 @@ RUN sudo apt-get update \
     && sudo cp /home/$systemUser/mariadb.cnf /etc/mysql/mariadb.cnf \
     && sudo service mariadb start \
     && sudo mariadb --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
-    # && sudo mariadb --host="${mysqlhost}" --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
     ###############################################
     # Init Bench
     ###############################################
-    && bench init $benchFolderName --frappe-path $frappeRepo --frappe-branch $frappeBranch --python $pythonVersion \
+    && bench init $benchFolderName --frappe-path $frappeRepo --frappe-branch $appBranch --python $pythonVersion \
     # cd into bench folder
     && cd $benchFolderName \
     # install erpnext
-    && bench get-app erpnext $erpnextRepo --branch $erpnextBranch \
-    # && bench get-app hrms $hrmsRepo --branch $hrmsBranch \
+    && bench get-app erpnext $erpnextRepo --branch $appBranch \
     # delete temp file
     && sudo rm -rf /tmp/* \
     # start new site
     && bench new-site $siteName \
     --mariadb-root-password $mysqlPass  \
     --admin-password $adminPass \
-    # --db-host $mysqlhost \
     && bench --site $siteName install-app erpnext \
-    # && bench --site $siteName install-app hrms \
     # use site
     && bench use $siteName \
     # compile all python file
