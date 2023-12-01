@@ -1,0 +1,1 @@
+docker build -t dtl/erp-debian:version-15-latest . && docker-compose up -d && docker-compose logs --follow

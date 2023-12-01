@@ -6,10 +6,15 @@ FROM frappe/bench:v5.19.0
 ###############################################
 # ARG
 ###############################################
-ARG adminPass=12345
-ARG mysqlPass=12345
+ARG adminPass=admin
+ARG mysqlPass=admin
+ARG mysqlhost=172.17.0.1
+ARG mysqldbname=gna 
 ARG pythonVersion=python3
 ARG appBranch=version-15
+ARG frappeBranch=dtl
+ARG erpnextBranch=dtl
+ARG hrmsBranch=dtl
 
 ###############################################
 # ENV 
@@ -20,7 +25,7 @@ ENV \
     # Dependencies version
     # [Note] Frappe only support up to mariadb 10.8 (as of 2023-Nov)
     # but 10.8 isn't lts version so I use 10.6 instead
-    mariadbVersion=10.6 \
+    # mariadbVersion=10.6 \
     # Frappe Related
     benchPath=bench-repo \
     benchFolderName=bench \
@@ -28,8 +33,9 @@ ENV \
     # [Note] Some how bench use v5.x as Master and Master didn't get the updates
     # https://github.com/frappe/bench/pull/1270
     benchBranch=v5.x \
-    frappeRepo="https://github.com/frappe/frappe" \
-    erpnextRepo="https://github.com/frappe/erpnext" \
+    frappeRepo="https://github.com/devsbranch/frappe" \
+    erpnextRepo="https://github.com/devsbranch/erpnext" \
+    hrmsRepo="https://github.com/devsbranch/hrms" \
     siteName=site1.local
 
 ###############################################
@@ -63,11 +69,13 @@ RUN sudo apt-get update \
     && echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://mirror.kku.ac.th/mariadb/repo/10.11/debian bookworm main" | sudo tee /etc/apt/sources.list.d/mariadb.list \
     && sudo apt-get update \
     && sudo apt-get install -y -q \
-    mariadb-server \
+    # mariadb-server \
     mariadb-client \
     mariadb-common \
     libmariadb3 \
     python3-mysqldb \
+    # For backups
+    restic \
     ###############################################
     # Install dependencies: Redis
     ###############################################
@@ -92,24 +100,27 @@ RUN sudo apt-get update \
     # Init Bench & Setup Site
     ###############################################
     # copy MariaDB Config
-    && sudo cp /home/$systemUser/mariadb.cnf /etc/mysql/mariadb.cnf \
-    && sudo service mariadb start \
-    && sudo mariadb --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
+    # && sudo cp /home/$systemUser/mariadb.cnf /etc/mysql/mariadb.cnf \
+    # && sudo service mariadb start \
+    && sudo mariadb --host="${mysqlhost}" --user="root" --password="${mysqlPass}" --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlPass}';" \
     ###############################################
     # Init Bench
     ###############################################
-    && bench init $benchFolderName --frappe-path $frappeRepo --frappe-branch $appBranch --python $pythonVersion \
+    && bench init $benchFolderName --frappe-path $frappeRepo --frappe-branch $frappeBranch --python $pythonVersion \
     # cd into bench folder
     && cd $benchFolderName \
     # install erpnext
-    && bench get-app erpnext $erpnextRepo --branch $appBranch \
+    && bench get-app erpnext $erpnextRepo --branch $erpnextBranch \
+    # && bench get-app hrms $hrmsRepo --branch $hrmsBranch \
     # delete temp file
     && sudo rm -rf /tmp/* \
     # start new site
     && bench new-site $siteName \
     --mariadb-root-password $mysqlPass  \
     --admin-password $adminPass \
+    --db-host $mysqlhost \
     && bench --site $siteName install-app erpnext \
+    # && bench --site $siteName install-app hrms \
     # use site
     && bench use $siteName \
     # compile all python file
@@ -130,4 +141,4 @@ WORKDIR /home/$systemUser/$benchFolderName
 CMD ["/usr/local/bin/entrypoint.sh"]
 
 # expose port
-EXPOSE 8000 9000 3306
+EXPOSE 8000 9000
